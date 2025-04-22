@@ -2,6 +2,7 @@
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
+import { safeASTCast } from '../astTransformerFix';
 
 export interface AnalyzedComponent {
   name: string;
@@ -63,14 +64,17 @@ export class ComponentAnalyzer {
                 
                 if (t.isIdentifier(firstParam)) {
                   // Simple props like function Component(props)
-                  result.props.push('props');
-                } else if (t.isObjectPattern(firstParam)) {
+                  result.props.push(firstParam.name);
+                } else if (t.isObjectPattern(safeASTCast(firstParam))) {
                   // Destructured props like function Component({ prop1, prop2 })
-                  firstParam.properties.forEach(prop => {
-                    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-                      result.props.push(prop.key.name);
-                    }
-                  });
+                  const objPattern = safeASTCast<any>(firstParam);
+                  if (Array.isArray(objPattern.properties)) {
+                    objPattern.properties.forEach(prop => {
+                      if (t.isObjectProperty(safeASTCast(prop)) && t.isIdentifier(safeASTCast(prop.key))) {
+                        result.props.push(safeASTCast<any>(prop.key).name);
+                      }
+                    });
+                  }
                 }
               }
             }
@@ -95,17 +99,20 @@ export class ComponentAnalyzer {
                 if (path.node.init.params.length > 0) {
                   const firstParam = path.node.init.params[0];
                   
-                  if (t.isIdentifier(firstParam)) {
+                  if (t.isIdentifier(safeASTCast(firstParam))) {
                     // Simple props like const Component = (props) => 
-                    result.props.push((firstParam as t.Identifier).name);
-                  } else if (t.isObjectPattern(firstParam)) {
+                    result.props.push(safeASTCast<any>(firstParam).name);
+                  } else if (t.isObjectPattern(safeASTCast(firstParam))) {
                     // Destructured props like const Component = ({ prop1, prop2 }) =>
-                    firstParam.properties.forEach(prop => {
-                      // Safe type checking before accessing 'key'
-                      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-                        result.props.push(prop.key.name);
-                      }
-                    });
+                    const objPattern = safeASTCast<any>(firstParam);
+                    if (Array.isArray(objPattern.properties)) {
+                      objPattern.properties.forEach(prop => {
+                        // Safe type checking before accessing 'key'
+                        if (t.isObjectProperty(safeASTCast(prop)) && t.isIdentifier(safeASTCast(prop.key))) {
+                          result.props.push(safeASTCast<any>(prop.key).name);
+                        }
+                      });
+                    }
                   }
                 }
               }

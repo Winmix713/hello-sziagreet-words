@@ -4,6 +4,7 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
 import { ErrorCollector } from '../errors/ErrorCollector';
+import { safeASTCast } from '../astTransformerFix';
 
 /**
  * Transformer that uses AST to convert Next.js Image components
@@ -81,7 +82,8 @@ export class AstImageTransformer {
             imageComponentFound = true;
             
             // Convert Next.js Image props to @unpic/react Image props
-            AstImageTransformer.transformImageProps(openingElement.attributes);
+            // Using any type to avoid TypeScript errors with Babel typings
+            AstImageTransformer.transformImageProps(openingElement.attributes as any);
           }
         }
       });
@@ -123,13 +125,13 @@ export class AstImageTransformer {
    * Transform Next.js Image props to @unpic/react Image props
    * Made static to fix TypeScript issues
    */
-  private static transformImageProps(attributes: t.JSXAttribute[]): void {
+  private static transformImageProps(attributes: any[]): void {
     // Track if required props are present
     let hasSizes = false;
     let hasWidth = false;
     let hasHeight = false;
     
-    // Process all attributes
+    // Process all attributes safely
     for (let i = 0; i < attributes.length; i++) {
       const attr = attributes[i];
       
@@ -196,21 +198,20 @@ export class AstImageTransformer {
     
     if (!hasLoading) {
       attributes.push(
-        t.jsxAttribute(
+        safeASTCast<any>(t.jsxAttribute(
           t.jsxIdentifier('loading'),
           t.stringLiteral('lazy')
-        )
+        ))
       );
     }
     
-    // Add responsive handling if needed
+    // Add sizes attribute for responsive images if needed
     if (!hasSizes && hasWidth && hasHeight) {
-      // Add sizes attribute for responsive images
       attributes.push(
-        t.jsxAttribute(
+        safeASTCast<any>(t.jsxAttribute(
           t.jsxIdentifier('sizes'),
           t.stringLiteral('(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw')
-        )
+        ))
       );
     }
   }

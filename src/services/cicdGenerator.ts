@@ -1,4 +1,3 @@
-
 import { CICDTemplate, CICDPlatform } from '@/types/conversion';
 
 /**
@@ -418,7 +417,7 @@ Resources:
         Statement:
           - Action: 's3:GetObject'
             Effect: Allow
-            Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
+            Resource: !Sub 'arn:aws:s3:::\${S3Bucket}/*'
             Principal:
               CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
   
@@ -426,7 +425,7 @@ Resources:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub 'OAI for ${DomainName}'
+        Comment: !Sub 'OAI for \${DomainName}'
   
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -436,7 +435,7 @@ Resources:
           - DomainName: !GetAtt S3Bucket.RegionalDomainName
             Id: S3Origin
             S3OriginConfig:
-              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/\${CloudFrontOriginAccessIdentity}'
         Enabled: true
         DefaultRootObject: index.html
         CustomErrorResponses:

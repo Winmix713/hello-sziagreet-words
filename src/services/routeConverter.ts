@@ -1,12 +1,15 @@
+
 import { analyzeDependencies } from './dependencyManager';
 
 export interface NextJsRoute {
   path: string;
   component: string;
   componentPath: string;
-  filePath: string; // Added filePath property
+  filePath: string;
   isDynamic: boolean;
   params?: string[];
+  layout?: string; // Added missing property
+  hasParams?: boolean; // Added missing property
 }
 
 export function analyzeNextJsRoutes(files: File[]): NextJsRoute[] {
