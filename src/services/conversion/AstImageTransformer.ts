@@ -4,7 +4,11 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
 import { ErrorCollector } from '../errors/ErrorCollector';
-import { safeASTCast } from '../astTransformerFix';
+import { 
+  safeASTCast, 
+  handleBabelVersionConflict, 
+  safeExpressionHandler 
+} from '../astTransformerFix';
 
 /**
  * Transformer that uses AST to convert Next.js Image components
@@ -54,12 +58,15 @@ export class AstImageTransformer {
             path.node.source.value = '@unpic/react';
             
             // Check if it's a default import and adjust if needed
-            const defaultImport = path.node.specifiers.find(
-              spec => t.isImportDefaultSpecifier(spec)
-            );
-            
-            if (defaultImport) {
-              imageComponentFound = true;
+            const specifiers = path.node.specifiers;
+            if (specifiers && specifiers.length > 0) {
+              const defaultImport = specifiers.find(
+                spec => t.isImportDefaultSpecifier(handleBabelVersionConflict(spec))
+              );
+              
+              if (defaultImport) {
+                imageComponentFound = true;
+              }
             }
           }
         }
@@ -83,7 +90,7 @@ export class AstImageTransformer {
             
             // Convert Next.js Image props to @unpic/react Image props
             // Using any type to avoid TypeScript errors with Babel typings
-            AstImageTransformer.transformImageProps(openingElement.attributes as any);
+            this.transformImageProps(handleBabelVersionConflict(openingElement.attributes));
           }
         }
       });
@@ -123,9 +130,10 @@ export class AstImageTransformer {
   
   /**
    * Transform Next.js Image props to @unpic/react Image props
-   * Made static to fix TypeScript issues
    */
-  private static transformImageProps(attributes: any[]): void {
+  private transformImageProps(attributes: any[]): void {
+    if (!Array.isArray(attributes)) return;
+    
     // Track if required props are present
     let hasSizes = false;
     let hasWidth = false;

@@ -8,8 +8,8 @@ export interface NextJsRoute {
   filePath: string;
   isDynamic: boolean;
   params?: string[];
-  layout?: string; // Added missing property
-  hasParams?: boolean; // Added missing property
+  layout?: string;
+  hasParams?: boolean;
 }
 
 export function analyzeNextJsRoutes(files: File[]): NextJsRoute[] {

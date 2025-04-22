@@ -1,4 +1,5 @@
-import { ConversionOptions, ConversionResult } from "@/types/conversion";
+
+import { ConversionOptions } from "@/types/conversion";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
 import { RouteAnalyzer } from "./RouteAnalyzer";
 import { FileTransformer } from "./FileTransformer";
@@ -6,6 +7,24 @@ import { ApiRouteConverter } from "./ApiRouteConverter";
 import { MiddlewareHandler } from "./MiddlewareHandler";
 import { CICDGenerator } from "./CICDGenerator";
 import { ErrorCollector } from "../errors/ErrorCollector";
+
+// Define a local interface for ConversionResult to avoid import issues
+interface ConversionResult {
+  success: boolean;
+  errors: string[];
+  warnings: string[];
+  info: string[];
+  routes: any[];
+  dependencies: any[];
+  transformedFiles: string[];
+  stats: {
+    totalFiles: number;
+    modifiedFiles: number;
+    transformationRate: number;
+    dependencyChanges: number;
+    routeChanges: number;
+  };
+}
 
 /**
  * Core executor that orchestrates the conversion process.
