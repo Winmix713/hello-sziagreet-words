@@ -5,7 +5,8 @@ import {
   safeExpressionHandler, 
   safePatternHandler, 
   handleBabelVersionConflict, 
-  isSafeObjectPattern 
+  isSafeObjectPattern,
+  isSafeArrayPattern
 } from '../../astTransformerFix';
 
 /**
@@ -32,6 +33,18 @@ export function extractPropsFromParam(param: any, result: AnalyzedComponent): vo
             result.props.push(safeExpressionHandler(safeProp.key).name);
           } else if (t.isRestElement(safeProp) && t.isIdentifier(safeProp.argument)) {
             result.props.push(`...${safeProp.argument.name}`);
+          }
+        }
+      }
+    } else if (isSafeArrayPattern(param)) {
+      // Handle array destructuring if present
+      const arrayPattern = safePatternHandler(param);
+      
+      if (arrayPattern.elements && Array.isArray(arrayPattern.elements)) {
+        for (let i = 0; i < arrayPattern.elements.length; i++) {
+          const element = arrayPattern.elements[i];
+          if (element && t.isIdentifier(element)) {
+            result.props.push(`${element.name}[${i}]`);
           }
         }
       }

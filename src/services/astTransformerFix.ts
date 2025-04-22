@@ -108,6 +108,11 @@ export function isSafeObjectPattern(node: any): boolean {
   return node && typeof node === 'object' && 'type' in node && node.type === 'ObjectPattern';
 }
 
+// Safely check if a node is an array pattern
+export function isSafeArrayPattern(node: any): boolean {
+  return node && typeof node === 'object' && 'type' in node && node.type === 'ArrayPattern';
+}
+
 // Safely handle type inconsistencies between different babel versions
 export function handleBabelVersionConflict(node: any): any {
   // Just return the node as any to bypass type checking
