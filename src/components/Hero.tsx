@@ -1,6 +1,8 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface HeroProps {
   onStartAnalysis: (files: File[]) => void;
@@ -41,7 +43,18 @@ const Hero = ({ onStartAnalysis, isAnalyzing }: HeroProps) => {
 
   const handleStartAnalysis = () => {
     if (selectedFiles.length > 0) {
+      console.log("Starting analysis with", selectedFiles.length, "files");
       onStartAnalysis(selectedFiles);
+      toast({
+        title: "Analysis Started",
+        description: `Analyzing ${selectedFiles.length} files...`
+      });
+    } else {
+      toast({
+        title: "No Files Selected",
+        description: "Please select files to analyze first.",
+        variant: "destructive"
+      });
     }
   };
 
