@@ -2,7 +2,7 @@
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
-import { safeASTCast, safeExpressionHandler, safePatternHandler, handleBabelVersionConflict } from '../astTransformerFix';
+import { safeASTCast, safeExpressionHandler, safePatternHandler, handleBabelVersionConflict, isSafeObjectPattern } from '../astTransformerFix';
 
 export interface AnalyzedComponent {
   name: string;
@@ -132,7 +132,7 @@ export class ComponentAnalyzer {
       if (t.isIdentifier(param)) {
         // Simple props like function Component(props)
         result.props.push(param.name);
-      } else if (t.isObjectPattern(safePatternHandler(param))) {
+      } else if (isSafeObjectPattern(param)) {
         // Destructured props like function Component({ prop1, prop2 })
         const objPattern = safePatternHandler(param);
         
