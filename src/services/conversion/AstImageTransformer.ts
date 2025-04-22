@@ -90,10 +90,12 @@ export class AstImageTransformer {
             
             // Convert Next.js Image props to @unpic/react Image props
             // Using any type to avoid TypeScript errors with Babel typings
-            this.transformImageProps(handleBabelVersionConflict(openingElement.attributes));
+            const self = this;
+            const attributes = handleBabelVersionConflict(openingElement.attributes);
+            self.transformImageProps(attributes);
           }
         }
-      });
+      }, this);
       
       // Generate code from the modified AST
       if (imageComponentFound) {

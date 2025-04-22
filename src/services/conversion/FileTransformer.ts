@@ -1,8 +1,9 @@
+
 import { ConversionOptions } from "@/types/conversion";
 import { transformCode, getTransformationStats } from "../codeTransformer";
 import { transformComponent } from "../componentTransformer";
 import { ErrorCollector } from "../errors/ErrorCollector";
-import { analyzeComponentUsage } from "./ComponentAnalyzer"; // Helyes importálás
+import { analyzeComponentUsage } from "./ComponentAnalyzer"; // Fixed import
 
 /**
  * Handles the transformation of source files during conversion
