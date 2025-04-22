@@ -303,3 +303,20 @@ export interface CICDTemplate {
   filename: string;
   description: string;
 }
+
+export interface ConversionResult {
+  success: boolean;
+  errors: string[];
+  warnings: string[];
+  info: string[];
+  routes: any[];
+  dependencies: any[];
+  transformedFiles: any[];
+  stats: {
+    totalFiles: number;
+    modifiedFiles: number;
+    transformationRate: number;
+    dependencyChanges: number;
+    routeChanges: number;
+  };
+}

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface HeroProps {
+export interface HeroProps {
   onStartAnalysis: (files: File[]) => void;
   isAnalyzing: boolean;
 }

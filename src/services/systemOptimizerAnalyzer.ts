@@ -1,4 +1,3 @@
-
 import { analyzeNextJsRoutes } from './routeConverter';
 import { analyzeDependencies, checkVersionCompatibility } from './dependencyManager';
 import { transformCode, getTransformationStats } from './codeTransformer';
@@ -624,7 +623,7 @@ export async function validateConversionSystem(): Promise<{
   }
   
   // Rendszerállapot értékelése
-  const valid = issues.length === 0;
+  const valid = !components.some(comp => comp.status === 'error');
   
   return {
     valid,

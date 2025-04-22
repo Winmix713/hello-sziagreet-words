@@ -1,56 +1,141 @@
-import * as babelParser from "@babel/parser";
-import traverse from "@babel/traverse";
 
-export interface ComponentUsageStats {
-  used: boolean;
-  count: number;
+import { parse } from '@babel/parser';
+import traverse from '@babel/traverse';
+import * as t from '@babel/types';
+
+export interface AnalyzedComponent {
+  name: string;
+  type: 'functional' | 'class' | 'unknown';
+  imports: string[];
+  nextJsImports: string[];
+  props: string[];
 }
 
 /**
- * Egy fájl tartalmát elemzi, hogy meghatározza a Next.js komponensek használatát.
- *
- * @param content - A fájl tartalma, amit elemezni kell.
- * @param componentType - A keresett Next.js komponens típusa (pl.: "image", "link").
- * @returns ComponentUsageStats objektum, amely tartalmazza a használati állapotot és a számlálást.
+ * Analyzes React components to determine their structure and dependencies
  */
-export function analyzeComponentUsage(content: string, componentType: string): ComponentUsageStats {
-  // AST (Abstract Syntax Tree) generálása a fájl tartalmából
-  const ast = babelParser.parse(content, {
-    sourceType: "module",
-    plugins: ["jsx", "typescript"],
-  });
-
-  const imports: Set<string> = new Set();
-  let count = 0;
-
-  traverse(ast, {
-    // Next.js komponensek importjának követése
-    ImportDeclaration(path) {
-      const source = path.node.source.value;
-      if (source === `next/${componentType}`) {
-        path.node.specifiers.forEach((specifier) => {
-          if (specifier.type === "ImportSpecifier" || specifier.type === "ImportDefaultSpecifier") {
-            imports.add(specifier.local.name);
+export class ComponentAnalyzer {
+  /**
+   * Analyze a component file
+   */
+  analyzeComponent(code: string): AnalyzedComponent | null {
+    try {
+      const ast = parse(code, {
+        sourceType: 'module',
+        plugins: ['jsx', 'typescript']
+      });
+      
+      const result: AnalyzedComponent = {
+        name: '',
+        type: 'unknown',
+        imports: [],
+        nextJsImports: [],
+        props: []
+      };
+      
+      // Find imports first
+      traverse(ast, {
+        ImportDeclaration(path) {
+          const source = path.node.source.value as string;
+          result.imports.push(source);
+          
+          if (source.startsWith('next/')) {
+            result.nextJsImports.push(source);
           }
-        });
-      }
-    },
-    // JSX tag-ek használatának számlálása
-    JSXIdentifier(path) {
-      if (imports.has(path.node.name)) {
-        count++;
-      }
-    },
-    // Függvényhívások számlálása (pl.: dynamic())
-    CallExpression(path) {
-      if (componentType === "dynamic" && path.node.callee.name === "dynamic") {
-        count++;
-      }
-    },
-  });
-
-  return {
-    used: count > 0,
-    count,
-  };
+        }
+      });
+      
+      // Find component name and type
+      traverse(ast, {
+        // Find function declarations
+        FunctionDeclaration(path) {
+          if (path.node.id && path.node.id.name) {
+            const name = path.node.id.name;
+            
+            // Check if it's likely a component (starts with capital letter)
+            if (name[0] === name[0].toUpperCase()) {
+              result.name = name;
+              result.type = 'functional';
+              
+              // Extract props from parameters
+              if (path.node.params.length > 0) {
+                const firstParam = path.node.params[0];
+                
+                if (t.isIdentifier(firstParam)) {
+                  // Simple props like function Component(props)
+                  result.props.push('props');
+                } else if (t.isObjectPattern(firstParam)) {
+                  // Destructured props like function Component({ prop1, prop2 })
+                  firstParam.properties.forEach(prop => {
+                    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
+                      result.props.push(prop.key.name);
+                    }
+                  });
+                }
+              }
+            }
+          }
+        },
+        
+        // Find variable declarations that could be components
+        VariableDeclarator(path) {
+          if (t.isIdentifier(path.node.id)) {
+            const name = path.node.id.name;
+            
+            // Check if it's likely a component (starts with capital letter)
+            if (name[0] === name[0].toUpperCase()) {
+              result.name = name;
+              
+              // Check if it's an arrow function or function expression
+              if (t.isArrowFunctionExpression(path.node.init) || 
+                  t.isFunctionExpression(path.node.init)) {
+                result.type = 'functional';
+                
+                // Extract props from parameters
+                if (path.node.init.params.length > 0) {
+                  const firstParam = path.node.init.params[0];
+                  
+                  if (t.isIdentifier(firstParam)) {
+                    // Simple props like const Component = (props) => 
+                    result.props.push((firstParam as t.Identifier).name);
+                  } else if (t.isObjectPattern(firstParam)) {
+                    // Destructured props like const Component = ({ prop1, prop2 }) =>
+                    firstParam.properties.forEach(prop => {
+                      // Safe type checking before accessing 'key'
+                      if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
+                        result.props.push(prop.key.name);
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          }
+        },
+        
+        // Find class components
+        ClassDeclaration(path) {
+          if (path.node.id) {
+            const name = path.node.id.name;
+            
+            // Check if it extends React.Component
+            const superClass = path.node.superClass;
+            if (superClass && 
+                ((t.isIdentifier(superClass) && superClass.name === 'Component') ||
+                 (t.isMemberExpression(superClass) && 
+                  t.isIdentifier(superClass.object) && superClass.object.name === 'React' &&
+                  t.isIdentifier(superClass.property) && superClass.property.name === 'Component'))) {
+              result.name = name;
+              result.type = 'class';
+            }
+          }
+        }
+      });
+      
+      return result.name ? result : null;
+    } catch (error) {
+      console.error('Error analyzing component:', error);
+      return null;
+    }
+  }
 }

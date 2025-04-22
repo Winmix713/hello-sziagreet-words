@@ -1,9 +1,8 @@
 
 // This is a partial fix for the array type issues in astTransformer.ts
-// In a complete implementation, you would fix the entire file
 
 // This function shows how to properly handle the array types
-export function fixClassBodyArrayIssues(classBody: any): void {
+export function fixClassBodyArrayIssues(classBody: any[]): void {
   // Ensure we're working with an array
   if (Array.isArray(classBody)) {
     // Now TypeScript knows it's an array and length/splice are valid

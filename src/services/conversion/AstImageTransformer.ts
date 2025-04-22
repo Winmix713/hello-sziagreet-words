@@ -1,3 +1,4 @@
+
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
@@ -80,7 +81,7 @@ export class AstImageTransformer {
             imageComponentFound = true;
             
             // Convert Next.js Image props to @unpic/react Image props
-            this.transformImageProps(openingElement.attributes);
+            AstImageTransformer.transformImageProps(openingElement.attributes);
           }
         }
       });
@@ -120,8 +121,9 @@ export class AstImageTransformer {
   
   /**
    * Transform Next.js Image props to @unpic/react Image props
+   * Made static to fix TypeScript issues
    */
-  private transformImageProps(attributes: t.JSXAttribute[]): void {
+  private static transformImageProps(attributes: t.JSXAttribute[]): void {
     // Track if required props are present
     let hasSizes = false;
     let hasWidth = false;

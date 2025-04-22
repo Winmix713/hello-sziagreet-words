@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import Hero, { HeroProps } from "@/components/Hero";
+import Hero from "@/components/Hero";
 import FeatureList from "@/components/FeatureList";
 import Footer from "@/components/Footer";
 import ConversionStepper from "@/components/ConversionStepper";
