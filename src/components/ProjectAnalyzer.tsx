@@ -56,11 +56,11 @@ const ProjectAnalyzer = ({ files = [], onFilesProcessed }: ProjectAnalyzerProps)
     let apiRoutes = 0;
     let dataFetching = 0;
 
-    // Simulate analyzing files
+    // Analyze files
     const analyzeFiles = async () => {
       try {
         for (const file of filesToProcess) {
-          // In a real implementation, we would actually analyze the file content
+          // Update UI with current file
           setCurrentFile(file.name);
           
           // Preview first text file
@@ -77,20 +77,32 @@ const ProjectAnalyzer = ({ files = [], onFilesProcessed }: ProjectAnalyzerProps)
             }
           }
           
-          // Simulate some analysis based on file names/paths
-          if (file.name.includes("page") || file.name.includes("Page")) {
-            nextComponents++;
-          }
-          if (file.name.includes("api")) {
-            apiRoutes++;
-          }
-          if (file.name.includes("getStaticProps") || file.name.includes("getServerSideProps")) {
-            dataFetching++;
+          // Analyze file content
+          try {
+            const content = await readFileContent(file);
+            
+            // Check for Next.js components and features
+            if (content.includes("import") && content.includes("from 'next")) {
+              nextComponents++;
+            }
+            
+            if (file.name.includes("/api/") || file.name.includes("pages/api/")) {
+              apiRoutes++;
+            }
+            
+            if (content.includes("getStaticProps") || content.includes("getServerSideProps")) {
+              dataFetching++;
+            }
+          } catch (error) {
+            console.error("Error analyzing file:", error);
           }
           
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Update progress
           processedFiles++;
           setProgress(Math.floor((processedFiles / totalFiles) * 100));
+          
+          // Small delay to prevent UI freezing
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
 
         // Calculate complexity score (0-100)
@@ -108,6 +120,8 @@ const ProjectAnalyzer = ({ files = [], onFilesProcessed }: ProjectAnalyzerProps)
         };
 
         setStats(results);
+        
+        // Call the callback with the results
         onFilesProcessed(results);
         
         toast({
@@ -135,6 +149,14 @@ const ProjectAnalyzer = ({ files = [], onFilesProcessed }: ProjectAnalyzerProps)
       console.log("Files selected:", newFiles.length);
       setSelectedFiles(newFiles);
       setFilePreview(null);
+      
+      // Show success toast for file selection
+      if (newFiles.length > 0) {
+        toast({
+          title: "Files Selected",
+          description: `${newFiles.length} files selected for analysis.`,
+        });
+      }
     }
   };
 

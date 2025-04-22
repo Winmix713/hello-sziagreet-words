@@ -46,6 +46,8 @@ export class ComponentAnalyzer {
         }
       });
       
+      const self = this;
+      
       // Find component name and type
       traverse(ast, {
         // Find function declarations
@@ -61,7 +63,7 @@ export class ComponentAnalyzer {
               // Extract props from parameters
               if (path.node.params.length > 0) {
                 const firstParam = handleBabelVersionConflict(path.node.params[0]);
-                this.extractPropsFromParam(firstParam, result);
+                self.extractPropsFromParam(firstParam, result);
               }
             }
           }
@@ -85,7 +87,7 @@ export class ComponentAnalyzer {
                 const init = safeExpressionHandler(path.node.init);
                 if (init.params && init.params.length > 0) {
                   const firstParam = handleBabelVersionConflict(init.params[0]);
-                  this.extractPropsFromParam(firstParam, result);
+                  self.extractPropsFromParam(firstParam, result);
                 }
               }
             }
@@ -109,7 +111,7 @@ export class ComponentAnalyzer {
             }
           }
         }
-      }, { extractPropsFromParam: this.extractPropsFromParam });
+      });
       
       return result.name ? result : null;
     } catch (error) {

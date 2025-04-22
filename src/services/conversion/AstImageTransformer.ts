@@ -79,23 +79,23 @@ export class AstImageTransformer {
       
       // Transform JSX elements
       traverse(ast, {
-        JSXElement(path) {
-          const openingElement = path.node.openingElement;
-          
-          // Check if this is an Image component
-          if (t.isJSXIdentifier(openingElement.name) && 
-              openingElement.name.name === 'Image') {
+        JSXElement: {
+          enter: (path) => {
+            const openingElement = path.node.openingElement;
             
-            imageComponentFound = true;
-            
-            // Convert Next.js Image props to @unpic/react Image props
-            // Using any type to avoid TypeScript errors with Babel typings
-            const self = this;
-            const attributes = handleBabelVersionConflict(openingElement.attributes);
-            self.transformImageProps(attributes);
+            // Check if this is an Image component
+            if (t.isJSXIdentifier(openingElement.name) && 
+                openingElement.name.name === 'Image') {
+              
+              imageComponentFound = true;
+              
+              // Convert Next.js Image props to @unpic/react Image props
+              const attributes = handleBabelVersionConflict(openingElement.attributes);
+              this.transformImageProps(attributes);
+            }
           }
         }
-      }, this);
+      });
       
       // Generate code from the modified AST
       if (imageComponentFound) {

@@ -3,7 +3,7 @@ import { ConversionOptions } from "@/types/conversion";
 import { transformCode, getTransformationStats } from "../codeTransformer";
 import { transformComponent } from "../componentTransformer";
 import { ErrorCollector } from "../errors/ErrorCollector";
-import { analyzeComponentUsage } from "./ComponentAnalyzer"; // Fixed import
+import { analyzeComponentUsage } from "./ComponentAnalyzer";
 
 /**
  * Handles the transformation of source files during conversion
@@ -60,7 +60,7 @@ export class FileTransformer {
         });
       }
 
-      result.transformationRate = result.modifiedFiles / totalFiles;
+      result.transformationRate = totalFiles > 0 ? result.modifiedFiles / totalFiles : 0;
       result.details = details;
 
       return result;

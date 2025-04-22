@@ -28,16 +28,26 @@ const Hero = ({ onStartAnalysis, isAnalyzing }: HeroProps) => {
     e.preventDefault();
     setIsDragging(false);
     
-    if (e.dataTransfer.files) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
       setSelectedFiles(files);
+      
+      toast({
+        title: "Files Received",
+        description: `${files.length} files dropped and ready for analysis.`,
+      });
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       setSelectedFiles(files);
+      
+      toast({
+        title: "Files Selected",
+        description: `${files.length} files selected for analysis.`,
+      });
     }
   };
 
@@ -101,9 +111,9 @@ const Hero = ({ onStartAnalysis, isAnalyzing }: HeroProps) => {
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              webkitdirectory=""
-              directory=""
               multiple
+              // Remove the problematic attributes that don't work correctly in some browsers
+              // and use regular file selection
             />
             
             <Button 
