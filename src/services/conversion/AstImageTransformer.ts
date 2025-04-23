@@ -82,7 +82,7 @@ export class AstImageTransformer {
             imageComponentFound = true;
             
             // Convert Next.js Image props to @unpic/react Image props
-            this.transformImageProps(openingElement.attributes);
+            this.transformNextImageProps(openingElement.attributes);
           }
         }
       });
@@ -123,7 +123,7 @@ export class AstImageTransformer {
   /**
    * Transform Next.js Image props to @unpic/react Image props
    */
-  private transformImageProps(attributes: t.JSXAttribute[]): void {
+  private transformNextImageProps(attributes: (t.JSXAttribute | t.JSXSpreadAttribute)[]): void {
     // Track if required props are present
     let hasSizes = false;
     let hasWidth = false;

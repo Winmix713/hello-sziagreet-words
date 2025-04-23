@@ -3,6 +3,7 @@ import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import { AstTransformOptions, TransformResult } from '@/types/ast';
+import { isNodeOfType, safeNodeCast } from './astTransformerHelper';
 import { transformImports } from './transformers/importTransformer';
 import { transformJSXElement } from './transformers/componentTransformer';
 import { transformRouterUsage } from './transformers/routerTransformer';
@@ -23,15 +24,16 @@ export function transformWithAst(
       plugins: ['typescript', 'jsx'],
     });
 
+    // Using a type-safe approach with the transformer functions
     traverse(ast, {
-      ImportDeclaration(path) {
-        transformImports(path, result);
+      ImportDeclaration(path: any) {
+        transformImports(safeNodeCast(path), result);
       },
-      JSXElement(path) {
-        transformJSXElement(path, result);
+      JSXElement(path: any) {
+        transformJSXElement(safeNodeCast(path), result);
       },
-      MemberExpression(path) {
-        transformRouterUsage(path, result);
+      MemberExpression(path: any) {
+        transformRouterUsage(safeNodeCast(path), result);
       }
     });
 

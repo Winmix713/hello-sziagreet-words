@@ -22,13 +22,16 @@ const ConversionDashboard = ({
 }: ConversionDashboardProps) => {
   const { state, dispatch } = useConversion();
   const [options, setOptions] = useState<ConversionOptionsType>({
+    syntax: 'typescript',
     useReactRouter: true,
     convertApiRoutes: true,
     transformDataFetching: true,
     replaceComponents: true,
     updateDependencies: true,
     preserveTypeScript: true,
-    handleMiddleware: true
+    handleMiddleware: true,
+    preserveComments: true,
+    target: 'react-vite'
   });
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);

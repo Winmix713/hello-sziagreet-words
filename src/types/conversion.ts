@@ -12,6 +12,7 @@ export interface ConversionOptions {
   replaceComponents: boolean;
   handleMiddleware: boolean;
   preserveComments: boolean;
+  preserveTypeScript?: boolean; // Added this property
   target: 'react-vite' | 'react-cra';
 }
 

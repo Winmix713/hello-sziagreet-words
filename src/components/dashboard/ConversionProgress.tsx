@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +82,7 @@ const ConversionProgress = ({
         return newLogs;
       });
       
+      // Changed to access state.projectData safely
       setStats(oldStats => ({
         ...oldStats,
         totalFiles: state.projectData?.files?.length || 30,
