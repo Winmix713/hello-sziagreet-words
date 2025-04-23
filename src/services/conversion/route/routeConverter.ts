@@ -1,7 +1,7 @@
 
 import { RouteObject } from "react-router-dom";
 import { NextJsRoute, RouteConversionResult } from "./types";
-import { analyzeNextJsRoutes } from "./routeAnalyzer";
+import { analyzeRoutes } from "./routeAnalyzer";
 import { createRouteObject, getLayoutBasePath } from "./routeUtils";
 
 export function convertToReactRoutes(nextRoutes: NextJsRoute[]): RouteObject[] {
@@ -39,4 +39,4 @@ export function convertToReactRoutes(nextRoutes: NextJsRoute[]): RouteObject[] {
   return convertedRoutes;
 }
 
-export { analyzeNextJsRoutes };
+export { analyzeRoutes };

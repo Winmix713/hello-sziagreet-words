@@ -1,7 +1,6 @@
 
 import { ConversionOptions } from '@/types/conversion';
 import { transformWithAst } from './astTransformer';
-import { ConversionState } from '@/types/conversion';
 
 interface ConversionResult {
   success: boolean;

@@ -8,19 +8,27 @@ export function transformRouterUsage(path: NodePath<t.MemberExpression>, result:
     if (t.isIdentifier(path.node.property)) {
       switch (path.node.property.name) {
         case 'push':
-          path.replaceWith(t.identifier('navigate'));
+          // Instead of directly replacing, update the node properties
+          path.node.object = t.identifier('navigate');
           result.changes.push('router.push transformed to navigate');
           break;
         case 'query':
-          path.replaceWith(t.identifier('params'));
+          // Instead of directly replacing, update the node properties
+          path.node.object = t.identifier('params');
           result.changes.push('router.query transformed to params');
           break;
         case 'asPath':
         case 'pathname':
-          path.replaceWith(
-            t.memberExpression(t.identifier('location'), t.identifier('pathname'))
+          // Create a member expression instead of directly replacing
+          const locationPathname = t.memberExpression(
+            t.identifier('location'), 
+            t.identifier('pathname')
           );
-          result.changes.push('router path property transformed');
+          // Use path.replaceWith with the created expression
+          if (path.node) {
+            path.replaceWith(locationPathname);
+            result.changes.push('router path property transformed');
+          }
           break;
       }
     }

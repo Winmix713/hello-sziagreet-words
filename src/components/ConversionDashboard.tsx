@@ -28,7 +28,6 @@ const ConversionDashboard = ({
     transformDataFetching: true,
     replaceComponents: true,
     updateDependencies: true,
-    preserveTypeScript: true,
     handleMiddleware: true,
     preserveComments: true,
     target: 'react-vite'
@@ -46,7 +45,7 @@ const ConversionDashboard = ({
       
       // Update the context when options change
       dispatch({ 
-        type: "SET_CONVERSION_OPTIONS", 
+        type: "SET_OPTIONS", 
         payload: newOptions 
       });
       
@@ -65,8 +64,8 @@ const ConversionDashboard = ({
       parentOnStartConversion();
       
       // Update context state
-      dispatch({ type: "SET_IS_CONVERTING", payload: true });
-      dispatch({ type: "SET_CONVERSION_OPTIONS", payload: options });
+      dispatch({ type: "START_CONVERSION" });
+      dispatch({ type: "SET_OPTIONS", payload: options });
       
       toast.info("Starting Next.js to Vite conversion process...");
       
@@ -74,7 +73,6 @@ const ConversionDashboard = ({
         // Create conversion executor with the files and options
         const executor = new ConversionExecutor(
           projectData.files,
-          projectData.packageJson,
           options
         );
         
@@ -83,7 +81,7 @@ const ConversionDashboard = ({
           setProgress(progress);
           setProgressMessage(message);
           dispatch({ 
-            type: "SET_CONVERSION_PROGRESS", 
+            type: "SET_PROGRESS", 
             payload: { progress, message } 
           });
         });
@@ -95,14 +93,14 @@ const ConversionDashboard = ({
         if (result.success) {
           toast.success("Conversion completed successfully!");
           dispatch({ 
-            type: "SET_CONVERSION_RESULT", 
-            payload: { success: true, result } 
+            type: "SET_RESULT", 
+            payload: result 
           });
         } else {
           toast.error(`Conversion completed with ${result.errors.length} errors.`);
           dispatch({ 
-            type: "SET_CONVERSION_RESULT", 
-            payload: { success: false, result } 
+            type: "SET_RESULT", 
+            payload: result 
           });
         }
       } else {
@@ -111,19 +109,22 @@ const ConversionDashboard = ({
     } catch (error) {
       toast.error(`Error during conversion: ${error instanceof Error ? error.message : String(error)}`);
       dispatch({ 
-        type: "SET_CONVERSION_ERROR", 
-        payload: error instanceof Error ? error.message : String(error)
+        type: "ADD_LOG", 
+        payload: {
+          type: "error",
+          message: error instanceof Error ? error.message : String(error)
+        }
       });
     } finally {
       setIsConverting(false);
       // Update context state
-      dispatch({ type: "SET_IS_CONVERTING", payload: false });
+      dispatch({ type: "RESET" });
     }
   };
 
   // When component mounts, update the context with initial options
   useEffect(() => {
-    dispatch({ type: "SET_CONVERSION_OPTIONS", payload: options });
+    dispatch({ type: "SET_OPTIONS", payload: options });
   }, []);
 
   return (
