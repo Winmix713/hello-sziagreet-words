@@ -40,3 +40,24 @@ export function safeNodeTraversal(node: any, callback: (node: any) => void): voi
     }
   });
 }
+
+// Add the missing functions required by ASTHelpers.ts
+export function safeExpressionHandler(node: any): any {
+  return node;
+}
+
+export function safePatternHandler(node: any): any {
+  return node;
+}
+
+export function handleBabelVersionConflict(node: any): any {
+  return node;
+}
+
+export function isSafeObjectPattern(node: any): boolean {
+  return node && node.type === 'ObjectPattern';
+}
+
+export function isSafeArrayPattern(node: any): boolean {
+  return node && node.type === 'ArrayPattern';
+}

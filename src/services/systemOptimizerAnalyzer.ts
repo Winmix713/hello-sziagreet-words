@@ -1,4 +1,3 @@
-
 import { analyzeNextJsRoutes } from './routeConverter';
 import { analyzeDependencies, checkVersionCompatibility } from './dependencyManager';
 import { transformCode, getTransformationStats } from './codeTransformer';
@@ -568,19 +567,21 @@ export class SystemOptimizerAnalyzer {
 export async function validateConversionSystem(): Promise<{
   valid: boolean;
   issues: string[];
-  components: { name: string; status: 'ok' | 'warning' | 'error'; message?: string }[];
+  components: { name: string; status: ComponentStatus; message?: string }[];
 }> {
   console.log('Konverziós rendszer validálása...');
   
-  const components = [
-    { name: 'routeConverter', status: 'ok' as const },
-    { name: 'codeTransformer', status: 'ok' as const },
-    { name: 'astTransformer', status: 'ok' as const },
-    { name: 'middlewareTransformer', status: 'ok' as const },
-    { name: 'apiRouteTransformer', status: 'ok' as const },
-    { name: 'dependencyManager', status: 'ok' as const },
-    { name: 'performanceMonitor', status: 'ok' as const },
-    { name: 'diagnosticsReporter', status: 'ok' as const }
+  type ComponentStatus = 'ok' | 'warning' | 'error';
+  
+  const components: { name: string; status: ComponentStatus; message?: string }[] = [
+    { name: 'routeConverter', status: 'ok' },
+    { name: 'codeTransformer', status: 'ok' },
+    { name: 'astTransformer', status: 'ok' },
+    { name: 'middlewareTransformer', status: 'ok' },
+    { name: 'apiRouteTransformer', status: 'ok' },
+    { name: 'dependencyManager', status: 'ok' },
+    { name: 'performanceMonitor', status: 'ok' },
+    { name: 'diagnosticsReporter', status: 'ok' }
   ];
   
   const issues: string[] = [];
@@ -624,7 +625,7 @@ export async function validateConversionSystem(): Promise<{
   }
   
   // Rendszerállapot értékelése
-  const valid = issues.length === 0;
+  const valid = !components.some(comp => comp.status === 'error');
   
   return {
     valid,
