@@ -1,5 +1,9 @@
-
-import { CICDTemplate, CICDPlatform } from '@/types/conversion';
+interface CICDTemplate {
+  platform: 'vercel' | 'netlify' | 'github' | 'gitlab' | 'azure' | 'aws' | 'docker';
+  config: string;
+  filename: string;
+  description: string;
+}
 
 /**
  * Vercel konfigurációs sablon generálása
@@ -79,7 +83,8 @@ export const generateNetlifyConfig = (): CICDTemplate => ({
   directory = "netlify/functions"
   
 [build.environment]
-  NODE_VERSION = "18"`
+  NODE_VERSION = "18"
+`
 });
 
 /**
@@ -178,7 +183,8 @@ jobs:
         args: deploy --prod --dir=dist
       env:
         NETLIFY_AUTH_TOKEN: \${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: \${{ secrets.NETLIFY_SITE_ID }}`
+        NETLIFY_SITE_ID: \${{ secrets.NETLIFY_SITE_ID }}
+`
 });
 
 /**
@@ -200,7 +206,7 @@ variables:
   NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
 
 cache:
-  key: \${process.env.CI_COMMIT_REF_SLUG}
+  key: ${process.env.CI_COMMIT_REF_SLUG}
   paths:
     - .npm/
     - node_modules/
@@ -264,7 +270,8 @@ deploy-production:
   environment:
     name: production
   only:
-    - main`
+    - main
+`
 });
 
 /**
@@ -371,7 +378,8 @@ stages:
               appType: 'webApp'
               appName: '$(AZURE_APP_NAME_PROD)'
               package: '$(Pipeline.Workspace)/drop/dist.zip'
-              deploymentMethod: 'auto'`
+              deploymentMethod: 'auto'
+`
 });
 
 /**
@@ -380,7 +388,7 @@ stages:
 export const generateAwsConfig = (): CICDTemplate => ({
   platform: 'aws',
   filename: 'aws-cloudformation.yml',
-  description: 'AWS CloudFormation sablon az alkalmazás S3 + CloudFront telepítéshez',
+  description: 'AWS CloudFormation template for S3 + CloudFront deployment',
   config: `AWSTemplateFormatVersion: '2010-09-09'
 Description: 'React Vite App Deployment to S3 with CloudFront'
 
@@ -418,7 +426,7 @@ Resources:
         Statement:
           - Action: 's3:GetObject'
             Effect: Allow
-            Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
+            Resource: !Sub 'arn:aws:s3:::\${S3Bucket}/*'
             Principal:
               CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
   
@@ -426,7 +434,7 @@ Resources:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub 'OAI for ${DomainName}'
+        Comment: !Sub 'OAI for \${DomainName}'
   
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -436,7 +444,7 @@ Resources:
           - DomainName: !GetAtt S3Bucket.RegionalDomainName
             Id: S3Origin
             S3OriginConfig:
-              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/\${CloudFrontOriginAccessIdentity}'
         Enabled: true
         DefaultRootObject: index.html
         CustomErrorResponses:
@@ -467,6 +475,11 @@ Resources:
         HttpVersion: http2
         Aliases:
           - !Ref DomainName
+        Origins:
+          - DomainName: !GetAtt S3Bucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/\${CloudFrontOriginAccessIdentity}'
 
 Outputs:
   S3BucketName:
@@ -479,7 +492,8 @@ Outputs:
   
   CloudFrontDomainName:
     Description: Domain name of the CloudFront distribution
-    Value: !GetAtt CloudFrontDistribution.DomainName`
+    Value: !GetAtt CloudFrontDistribution.DomainName
+`
 });
 
 /**
@@ -488,7 +502,7 @@ Outputs:
 export const generateDockerConfig = (): CICDTemplate[] => {
   return [
     {
-      platform: 'docker' as CICDPlatform,
+      platform: 'docker',
       filename: 'Dockerfile',
       description: 'Docker konfiguráció Vite alkalmazáshoz',
       config: `FROM node:18-alpine AS builder
@@ -517,7 +531,7 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]`
     },
     {
-      platform: 'docker' as CICDPlatform,
+      platform: 'docker',
       filename: 'nginx.conf',
       description: 'Nginx konfigurációs fájl Single Page Application (SPA) kiszolgáláshoz',
       config: `server {
@@ -566,7 +580,7 @@ CMD ["nginx", "-g", "daemon off;"]`
 }`
     },
     {
-      platform: 'docker' as CICDPlatform,
+      platform: 'docker',
       filename: 'docker-compose.yml',
       description: 'Docker Compose konfiguráció fejlesztői környezethez',
       config: `version: '3.8'
