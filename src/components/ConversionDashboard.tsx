@@ -22,13 +22,15 @@ const ConversionDashboard = ({
   
   // Initialize with a default value to ensure options is never undefined
   const [options, setOptions] = useState<ConversionOptionsType>({
+    syntax: 'typescript',
     useReactRouter: true,
     convertApiRoutes: true,
     transformDataFetching: true,
     replaceComponents: true,
     updateDependencies: true,
-    preserveTypeScript: true,
-    handleMiddleware: true
+    handleMiddleware: true,
+    preserveComments: true,
+    target: 'react-vite'
   });
 
   const toggleOption = (option: string) => {

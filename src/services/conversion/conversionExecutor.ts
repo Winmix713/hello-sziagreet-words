@@ -1,7 +1,7 @@
 
 import { ConversionOptions, ConversionResult } from "@/types/conversion";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
-import { RouteAnalyzer } from "./route/routeAnalyzer";
+import { analyzeRoutes } from "./route/routeAnalyzer";
 import { FileTransformer } from "./FileTransformer";
 import { FileAnalyzer } from "./FileAnalyzer";
 import { ApiRouteConverter } from "./ApiRouteConverter";
@@ -64,22 +64,21 @@ export class ConversionExecutor {
       // Dependencies
       if (this.options.updateDependencies) {
         const depAnalyzer = new DependencyAnalyzer(this.projectJson, this.errorCollector);
-        const depResults = await depAnalyzer.analyze();
+        const depResults = await depAnalyzer.analyzePackage();
         result.dependencies = depResults.dependencies;
         result.stats.dependencyChanges = depResults.changes;
       }
       
       // Routes
       if (this.options.useReactRouter) {
-        const routeAnalyzer = new RouteAnalyzer(this.files, this.errorCollector);
-        const routeResults = await routeAnalyzer.analyzeRoutes();
+        const routeResults = await analyzeRoutes(this.files, this.errorCollector);
         result.routes = routeResults.routes;
         result.stats.routeChanges = routeResults.routes.length;
       }
       
       // Code transformation
       const transformer = new FileTransformer(this.files, this.errorCollector);
-      const transformResults = await transformer.transform(this.options);
+      const transformResults = await transformer.transformFiles(this.options);
       result.transformedFiles = transformResults.transformedFiles;
       result.stats.modifiedFiles = transformResults.stats.modifiedFiles;
       result.stats.transformationRate = transformResults.stats.transformationRate;
@@ -87,18 +86,18 @@ export class ConversionExecutor {
       // API routes
       if (this.options.convertApiRoutes) {
         const apiConverter = new ApiRouteConverter(this.files, this.errorCollector);
-        await apiConverter.convert();
+        await apiConverter.convertApiRoutes();
       }
       
       // Middleware
       if (this.options.handleMiddleware) {
         const middlewareHandler = new MiddlewareHandler(this.files, this.errorCollector);
-        await middlewareHandler.handle();
+        await middlewareHandler.handleMiddleware();
       }
       
       // CI/CD
       const cicdGenerator = new CICDGenerator(this.errorCollector);
-      await cicdGenerator.generate();
+      const cicdResults = await cicdGenerator.generateCICDFiles();
       
       // Collect results
       const allErrors = this.errorCollector.getAllErrors();
