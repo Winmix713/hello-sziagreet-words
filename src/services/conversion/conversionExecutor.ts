@@ -64,9 +64,9 @@ export class ConversionExecutor {
       // Dependencies
       if (this.options.updateDependencies) {
         const depAnalyzer = new DependencyAnalyzer(this.projectJson, this.errorCollector);
-        const depResults = await depAnalyzer.analyzePackage();
+        const depResults = await depAnalyzer.analyzeDependencies();
         result.dependencies = depResults.dependencies;
-        result.stats.dependencyChanges = depResults.changes;
+        result.stats.dependencyChanges = depResults.dependencies.length;
       }
       
       // Routes
@@ -80,8 +80,8 @@ export class ConversionExecutor {
       const transformer = new FileTransformer(this.files, this.errorCollector);
       const transformResults = await transformer.transformFiles(this.options);
       result.transformedFiles = transformResults.transformedFiles;
-      result.stats.modifiedFiles = transformResults.stats.modifiedFiles;
-      result.stats.transformationRate = transformResults.stats.transformationRate;
+      result.stats.modifiedFiles = transformResults.modifiedFiles;
+      result.stats.transformationRate = transformResults.transformationRate;
       
       // API routes
       if (this.options.convertApiRoutes) {
@@ -92,7 +92,7 @@ export class ConversionExecutor {
       // Middleware
       if (this.options.handleMiddleware) {
         const middlewareHandler = new MiddlewareHandler(this.files, this.errorCollector);
-        await middlewareHandler.handleMiddleware();
+        await middlewareHandler.handleMiddlewares();
       }
       
       // CI/CD

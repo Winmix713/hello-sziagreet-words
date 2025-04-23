@@ -1,9 +1,8 @@
-
 import { analyzeNextJsRoutes } from './routeConverter';
 import { analyzeDependencies, checkVersionCompatibility } from './dependencyManager';
 import { transformCode, getTransformationStats } from './codeTransformer';
 import { analyzeMiddlewareFiles, transformMiddleware } from './middlewareTransformer';
-import { analyzeCodeStructure } from './astTransformer';
+import { ComponentStatus } from '@/types/componentStatus';
 import { ConversionOptions } from '@/types/conversion';
 import { PerformanceMonitor } from './performanceMonitor';
 import { DiagnosticsReporter } from './diagnosticsReporter';
@@ -568,7 +567,7 @@ export class SystemOptimizerAnalyzer {
 export async function validateConversionSystem(): Promise<{
   valid: boolean;
   issues: string[];
-  components: { name: string; status: 'ok' | 'warning' | 'error'; message?: string }[];
+  components: ComponentStatus[];
 }> {
   console.log('Konverziós rendszer validálása...');
   

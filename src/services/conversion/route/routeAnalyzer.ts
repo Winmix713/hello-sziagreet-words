@@ -1,59 +1,77 @@
 
-import { NextJsRoute } from "./types";
+import { ErrorCollector } from "../../errors/ErrorCollector";
+import { NextJsRoute } from "../../routeConverter";
 
-export function analyzeNextJsRoutes(files: File[]): NextJsRoute[] {
-  const routes: NextJsRoute[] = [];
-  const layouts = new Map<string, string>();
-  
-  files.forEach(file => {
-    if (file.name.match(/\/_layout\.(tsx|jsx|js|ts)$/)) {
-      const dirPath = file.name.replace(/\/[^/]+$/, '');
-      layouts.set(dirPath, file.name);
-    }
-  });
-  
-  files.forEach(file => {
-    if (file.name.includes('pages/') && !file.name.includes('/_') && 
-        !file.name.endsWith('.css') && !file.name.endsWith('.scss')) {
-      const path = file.name
-        .replace(/^pages/, '')
-        .replace(/\.(tsx|jsx|js|ts)$/, '')
-        .replace(/\/index$/, '/');
-
-      const isIndex = file.name.endsWith('index.tsx') || file.name.endsWith('index.jsx') || 
-                     file.name.endsWith('index.js') || file.name.endsWith('index.ts');
-                     
-      const isOptionalCatchAll = path.includes('[[') && path.includes(']]');
-      const isCatchAll = path.includes('[...') && path.includes(']');
-      const isDynamic = path.includes('[') && path.includes(']');
+/**
+ * Analyze routes from project files
+ */
+export async function analyzeRoutes(files: File[], errorCollector: ErrorCollector): Promise<{
+  routes: any[];
+}> {
+  try {
+    // Basic route analysis implementation
+    const routes: any[] = [];
+    
+    // Extract routes from files
+    for (const file of files) {
+      const fileName = file.name;
       
-      const params = isDynamic 
-        ? path.match(/\[(\.{0,3}[^\]]*)\]/g)?.map(p => p.replace(/[\[\]]/g, ''))
-        : [];
-
-      let layoutFile = null;
-      let dirPath = file.name.replace(/\/[^/]+$/, '');
-      while (dirPath !== 'pages') {
-        if (layouts.has(dirPath)) {
-          layoutFile = layouts.get(dirPath);
-          break;
+      // Check if this is a pages file
+      if (fileName.includes('/pages/') && 
+         (fileName.endsWith('.js') || fileName.endsWith('.jsx') || 
+          fileName.endsWith('.ts') || fileName.endsWith('.tsx'))) {
+        
+        // Skip API routes
+        if (fileName.includes('/api/')) continue;
+        
+        // Convert Next.js path to route
+        const route = convertFilePathToRoute(fileName);
+        if (route) {
+          routes.push(route);
         }
-        dirPath = dirPath.replace(/\/[^/]+$/, '');
       }
-
-      routes.push({
-        path,
-        component: file.name,
-        isDynamic,
-        hasParams: isDynamic,
-        params,
-        layout: layoutFile,
-        isIndex,
-        isOptionalCatchAll,
-        isCatchAll
-      });
     }
-  });
+    
+    return { routes };
+  } catch (error) {
+    errorCollector.addError({
+      code: 'ROUTE_ANALYSIS_ERROR',
+      severity: 'warning',
+      message: `Error analyzing routes: ${error instanceof Error ? error.message : String(error)}`
+    });
+    
+    return { routes: [] };
+  }
+}
 
-  return routes;
+/**
+ * Convert a file path to a route object
+ */
+function convertFilePathToRoute(filePath: string): any | null {
+  try {
+    // Extract route path from filePath
+    const parts = filePath.split('/pages/');
+    if (parts.length < 2) return null;
+    
+    let routePath = parts[1]
+      .replace(/\.(js|jsx|ts|tsx)$/, '')
+      .replace(/\/index$/, '/');
+    
+    // Handle dynamic routes
+    routePath = routePath.replace(/\[([^\]]+)\]/g, ':$1');
+    
+    // Remove trailing slash if not the index route
+    if (routePath !== '/') {
+      routePath = routePath.replace(/\/$/, '');
+    }
+    
+    return {
+      path: routePath,
+      componentPath: filePath,
+      component: parts[1].split('/').pop()?.replace(/\.(js|jsx|ts|tsx)$/, '') || 'Unknown'
+    };
+  } catch (error) {
+    console.error('Error converting file path to route:', error);
+    return null;
+  }
 }

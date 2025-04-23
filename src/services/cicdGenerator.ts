@@ -1,9 +1,5 @@
-interface CICDTemplate {
-  platform: 'vercel' | 'netlify' | 'github' | 'gitlab' | 'azure' | 'aws' | 'docker';
-  config: string;
-  filename: string;
-  description: string;
-}
+import { CICDTemplate, CICDPlatform } from "@/types/conversion";
+import { S3Bucket, DomainName, CloudFrontOriginAccessIdentity } from "@/types/aws";
 
 /**
  * Vercel konfigurációs sablon generálása
