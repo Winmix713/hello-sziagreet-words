@@ -1,4 +1,3 @@
-
 // This is a partial fix for the array type issues in astTransformer.ts
 // In a complete implementation, you would fix the entire file
 
@@ -42,15 +41,18 @@ export function safeNodeTraversal(node: any, callback: (node: any) => void): voi
 }
 
 // Add the missing functions required by ASTHelpers.ts
-export function safeExpressionHandler(node: any): any {
-  return node;
+export function safeExpressionHandler(node: any): boolean {
+  return node && typeof node === 'object' && 'type' in node;
 }
 
-export function safePatternHandler(node: any): any {
-  return node;
+export function safePatternHandler(node: any): boolean {
+  return node && typeof node === 'object' && ('type' in node || Array.isArray(node));
 }
 
 export function handleBabelVersionConflict(node: any): any {
+  if (Array.isArray(node)) {
+    return node.map(handleBabelVersionConflict);
+  }
   return node;
 }
 

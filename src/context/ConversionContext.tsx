@@ -1,8 +1,6 @@
-
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { ConversionOptions } from '@/types/conversion';
 
-// Define the state type
 interface ConversionState {
   isConverting: boolean;
   progress: number;
@@ -18,7 +16,6 @@ interface ConversionState {
   };
 }
 
-// Define the action types
 type ConversionAction =
   | { type: 'START_CONVERSION'; options: ConversionOptions }
   | { type: 'SET_PROGRESS'; progress: number }
@@ -27,19 +24,20 @@ type ConversionAction =
   | { type: 'SET_RESULT'; result: Partial<ConversionState['result']> }
   | { type: 'RESET' };
 
-// Define the initial state
 const initialConversionState: ConversionState = {
   isConverting: false,
   progress: 0,
   currentStep: 1,
   conversionOptions: {
+    syntax: 'typescript',
     useReactRouter: true,
     convertApiRoutes: true,
     transformDataFetching: true,
     replaceComponents: true,
     updateDependencies: true,
-    preserveTypeScript: true,
-    handleMiddleware: true
+    handleMiddleware: true,
+    preserveComments: true,
+    target: 'react-vite'
   },
   logs: [],
   result: {
@@ -49,7 +47,6 @@ const initialConversionState: ConversionState = {
   }
 };
 
-// Create the context
 const ConversionContext = createContext<{
   state: ConversionState;
   dispatch: React.Dispatch<ConversionAction>;
@@ -58,7 +55,6 @@ const ConversionContext = createContext<{
   dispatch: () => null
 });
 
-// Reducer function
 const conversionReducer = (state: ConversionState, action: ConversionAction): ConversionState => {
   switch (action.type) {
     case 'START_CONVERSION':
@@ -98,7 +94,6 @@ const conversionReducer = (state: ConversionState, action: ConversionAction): Co
   }
 };
 
-// Provider component
 export const ConversionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(conversionReducer, initialConversionState);
 
@@ -109,7 +104,6 @@ export const ConversionProvider: React.FC<{ children: ReactNode }> = ({ children
   );
 };
 
-// Hook for using the context
 export const useConversion = () => {
   const context = useContext(ConversionContext);
   if (!context) {

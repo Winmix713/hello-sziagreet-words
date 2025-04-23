@@ -30,6 +30,8 @@ export interface ConversionResult {
   routes: any[];
   dependencies: any[];
   transformedFiles: string[];
+  originalPath?: string;
+  code?: string;
   stats: {
     totalFiles: number;
     modifiedFiles: number;
@@ -43,4 +45,43 @@ export interface RouteConversionResult {
   nextRoutes: NextJsRoute[];
   reactRouterRoutes: any[];
   warnings: string[];
+  originalPath?: string;
+  code?: string;
+}
+
+export interface BabelCompatTypes {
+  ClassBody: any;
+  EnumBooleanBody: any;
+  EnumNumberBody: any;
+  EnumStringBody: any;
+  EnumSymbolBody: any;
+  ObjectTypeAnnotation: any;
+  TSTypeElement: any[];
+}
+
+export interface CICDPlatform {
+  name: string;
+  templates: CICDTemplate[];
+}
+
+export interface ComponentStatus {
+  name: string;
+  status: 'ok' | 'error';
+  message?: string;
+}
+
+// AWS specific types
+export interface S3Bucket {
+  name: string;
+  region: string;
+}
+
+export interface DomainName {
+  name: string;
+  zone: string;
+}
+
+export interface CloudFrontOriginAccessIdentity {
+  id: string;
+  name: string;
 }
