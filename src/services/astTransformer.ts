@@ -1,3 +1,4 @@
+
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
@@ -393,21 +394,13 @@ export function transformWithAst(
               // A program törzsében cseréljük a hook hívást
               const program = path.findParent(p => p.isProgram());
               if (program && 'body' in program.node) {
-                // Use the safeClassBodyHandler from astTransformerFix
+                // Megkeressük a változó deklaráció indexét
                 const declarations = program.node.body;
-                
-                // Safe handling of the declarations array
-                if (Array.isArray(declarations)) {
-                  for (let i = 0; i < declarations.length; i++) {
-                    if (declarations[i] === varDeclPath.node) {
-                      // Safely splice the array
-                      const newBody = newHooks.program.body;
-                      if (Array.isArray(newBody)) {
-                        // Safely replace the element with the new hooks
-                        declarations.splice(i, 1, ...newBody);
-                      }
-                      break;
-                    }
+                for (let i = 0; i < declarations.length; i++) {
+                  if (declarations[i] === varDeclPath.node) {
+                    // Beszúrjuk az új hook-okat
+                    declarations.splice(i, 1, ...(newHooks.program.body as any[]));
+                    break;
                   }
                 }
               }
@@ -602,7 +595,7 @@ export function analyzeCodeStructure(code: string): {
             }
           }
           
-          // Hook-ok (use prefixű f��ggvények)
+          // Hook-ok (use prefixű függvények)
           if (name.startsWith('use') && name.length > 3 && name[3] === name[3].toUpperCase()) {
             hooks.push(name);
           }

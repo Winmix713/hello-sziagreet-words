@@ -1,14 +1,8 @@
-
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
 import { ErrorCollector } from '../errors/ErrorCollector';
-import { 
-  safeASTCast, 
-  handleBabelVersionConflict, 
-  safeExpressionHandler 
-} from '../astTransformerFix';
 
 /**
  * Transformer that uses AST to convert Next.js Image components
@@ -58,15 +52,12 @@ export class AstImageTransformer {
             path.node.source.value = '@unpic/react';
             
             // Check if it's a default import and adjust if needed
-            const specifiers = path.node.specifiers;
-            if (specifiers && specifiers.length > 0) {
-              const defaultImport = specifiers.find(
-                spec => t.isImportDefaultSpecifier(handleBabelVersionConflict(spec))
-              );
-              
-              if (defaultImport) {
-                imageComponentFound = true;
-              }
+            const defaultImport = path.node.specifiers.find(
+              spec => t.isImportDefaultSpecifier(spec)
+            );
+            
+            if (defaultImport) {
+              imageComponentFound = true;
             }
           }
         }
@@ -79,20 +70,17 @@ export class AstImageTransformer {
       
       // Transform JSX elements
       traverse(ast, {
-        JSXElement: {
-          enter: (path) => {
-            const openingElement = path.node.openingElement;
+        JSXElement(path) {
+          const openingElement = path.node.openingElement;
+          
+          // Check if this is an Image component
+          if (t.isJSXIdentifier(openingElement.name) && 
+              openingElement.name.name === 'Image') {
             
-            // Check if this is an Image component
-            if (t.isJSXIdentifier(openingElement.name) && 
-                openingElement.name.name === 'Image') {
-              
-              imageComponentFound = true;
-              
-              // Convert Next.js Image props to @unpic/react Image props
-              const attributes = handleBabelVersionConflict(openingElement.attributes);
-              this.transformImageProps(attributes);
-            }
+            imageComponentFound = true;
+            
+            // Convert Next.js Image props to @unpic/react Image props
+            this.transformImageProps(openingElement.attributes);
           }
         }
       });
@@ -133,15 +121,13 @@ export class AstImageTransformer {
   /**
    * Transform Next.js Image props to @unpic/react Image props
    */
-  private transformImageProps(attributes: any[]): void {
-    if (!Array.isArray(attributes)) return;
-    
+  private transformImageProps(attributes: t.JSXAttribute[]): void {
     // Track if required props are present
     let hasSizes = false;
     let hasWidth = false;
     let hasHeight = false;
     
-    // Process all attributes safely
+    // Process all attributes
     for (let i = 0; i < attributes.length; i++) {
       const attr = attributes[i];
       
@@ -208,20 +194,21 @@ export class AstImageTransformer {
     
     if (!hasLoading) {
       attributes.push(
-        safeASTCast<any>(t.jsxAttribute(
+        t.jsxAttribute(
           t.jsxIdentifier('loading'),
           t.stringLiteral('lazy')
-        ))
+        )
       );
     }
     
-    // Add sizes attribute for responsive images if needed
+    // Add responsive handling if needed
     if (!hasSizes && hasWidth && hasHeight) {
+      // Add sizes attribute for responsive images
       attributes.push(
-        safeASTCast<any>(t.jsxAttribute(
+        t.jsxAttribute(
           t.jsxIdentifier('sizes'),
           t.stringLiteral('(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw')
-        ))
+        )
       );
     }
   }

@@ -1,3 +1,4 @@
+
 import { analyzeNextJsRoutes } from './routeConverter';
 import { analyzeDependencies, checkVersionCompatibility } from './dependencyManager';
 import { transformCode, getTransformationStats } from './codeTransformer';
@@ -6,12 +7,6 @@ import { analyzeCodeStructure } from './astTransformer';
 import { ConversionOptions } from '@/types/conversion';
 import { PerformanceMonitor } from './performanceMonitor';
 import { DiagnosticsReporter } from './diagnosticsReporter';
-
-type ComponentStatus = {
-  name: string;
-  status: 'ok' | 'warning' | 'error';
-  message?: string;
-};
 
 /**
  * Rendszerszintű optimalizáló és elemző
@@ -260,7 +255,7 @@ export class SystemOptimizerAnalyzer {
     // Next.js útvonalak elemzése
     const nextRoutes = analyzeNextJsRoutes(this.files as any);
     
-    // Dinamikus útvonalak száma
+    // Dinamikus útvonalak számolása
     const dynamicRoutes = nextRoutes.filter(route => route.isDynamic).length;
     
     // Komplex útvonalak (catch-all, opcionális paraméterek) számolása
@@ -573,19 +568,19 @@ export class SystemOptimizerAnalyzer {
 export async function validateConversionSystem(): Promise<{
   valid: boolean;
   issues: string[];
-  components: ComponentStatus[];
+  components: { name: string; status: 'ok' | 'warning' | 'error'; message?: string }[];
 }> {
   console.log('Konverziós rendszer validálása...');
   
-  const components: ComponentStatus[] = [
-    { name: 'routeConverter', status: 'ok' },
-    { name: 'codeTransformer', status: 'ok' },
-    { name: 'astTransformer', status: 'ok' },
-    { name: 'middlewareTransformer', status: 'ok' },
-    { name: 'apiRouteTransformer', status: 'ok' },
-    { name: 'dependencyManager', status: 'ok' },
-    { name: 'performanceMonitor', status: 'ok' },
-    { name: 'diagnosticsReporter', status: 'ok' }
+  const components = [
+    { name: 'routeConverter', status: 'ok' as const },
+    { name: 'codeTransformer', status: 'ok' as const },
+    { name: 'astTransformer', status: 'ok' as const },
+    { name: 'middlewareTransformer', status: 'ok' as const },
+    { name: 'apiRouteTransformer', status: 'ok' as const },
+    { name: 'dependencyManager', status: 'ok' as const },
+    { name: 'performanceMonitor', status: 'ok' as const },
+    { name: 'diagnosticsReporter', status: 'ok' as const }
   ];
   
   const issues: string[] = [];
@@ -629,7 +624,7 @@ export async function validateConversionSystem(): Promise<{
   }
   
   // Rendszerállapot értékelése
-  const valid = !components.some(comp => comp.status === 'error');
+  const valid = issues.length === 0;
   
   return {
     valid,

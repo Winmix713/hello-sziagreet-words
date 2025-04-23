@@ -1,30 +1,8 @@
-
 import { ConversionOptions } from "@/types/conversion";
 import { transformCode, getTransformationStats } from "../codeTransformer";
 import { transformComponent } from "../componentTransformer";
 import { ErrorCollector } from "../errors/ErrorCollector";
-import { analyzeComponentUsage } from "./ComponentAnalyzer";
-import { shouldSkipFile, readFileContent, isComponentFile } from "./utils/FileUtils";
-
-/**
- * Result of a file transformation operation
- */
-interface TransformationResult {
-  fileName: string;
-  modified: boolean;
-  transformations: string[];
-}
-
-/**
- * Result of component replacement operations
- */
-interface ComponentReplacementResult {
-  replacedComponents: {
-    file: string; 
-    component: string; 
-    count: number
-  }[];
-}
+import { analyzeComponentUsage } from "./ComponentAnalyzer"; // Helyes importálás
 
 /**
  * Handles the transformation of source files during conversion
@@ -61,57 +39,41 @@ export class FileTransformer {
 
       for (let i = 0; i < totalFiles; i += batchSize) {
         const batch = this.files.slice(i, Math.min(i + batchSize, totalFiles));
-        const batchResults = await this.transformFileBatch(batch, options);
-        
-        this.processTransformationResults(batchResults, result, details);
+
+        const batchResults = await Promise.all(
+          batch.map(async (file) => {
+            return this.transformFile(file, options);
+          })
+        );
+
+        batchResults.forEach((batchResult) => {
+          if (batchResult.modified) {
+            result.transformedFiles.push(batchResult.fileName);
+            result.modifiedFiles++;
+            details.push(
+              `Transformations in file: ${batchResult.fileName}\n${batchResult.transformations.join(
+                "\n"
+              )}`
+            );
+          }
+        });
       }
 
-      result.transformationRate = totalFiles > 0 ? result.modifiedFiles / totalFiles : 0;
+      result.transformationRate = result.modifiedFiles / totalFiles;
       result.details = details;
 
       return result;
     } catch (error) {
-      this.handleTransformationError(error);
+      this.errorCollector.addError({
+        code: "FILE_TRANSFORM_FAILED",
+        severity: "critical",
+        message: `Error during file transformation: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      });
+
       return result;
     }
-  }
-
-  /**
-   * Process a batch of files in parallel
-   */
-  private async transformFileBatch(
-    batch: File[],
-    options: ConversionOptions
-  ): Promise<TransformationResult[]> {
-    return Promise.all(
-      batch.map(async (file) => {
-        return this.transformFile(file, options);
-      })
-    );
-  }
-
-  /**
-   * Process transformation results and update the result object
-   */
-  private processTransformationResults(
-    batchResults: TransformationResult[],
-    result: {
-      transformedFiles: string[];
-      modifiedFiles: number;
-    },
-    details: string[]
-  ): void {
-    batchResults.forEach((batchResult) => {
-      if (batchResult.modified) {
-        result.transformedFiles.push(batchResult.fileName);
-        result.modifiedFiles++;
-        details.push(
-          `Transformations in file: ${batchResult.fileName}\n${batchResult.transformations.join(
-            "\n"
-          )}`
-        );
-      }
-    });
   }
 
   /**
@@ -120,7 +82,11 @@ export class FileTransformer {
   private async transformFile(
     file: File,
     options: ConversionOptions
-  ): Promise<TransformationResult> {
+  ): Promise<{
+    fileName: string;
+    modified: boolean;
+    transformations: string[];
+  }> {
     const result = {
       fileName: file.name,
       modified: false,
@@ -128,11 +94,12 @@ export class FileTransformer {
     };
 
     try {
-      if (shouldSkipFile(file.name)) {
+      if (this.shouldSkipFile(file.name)) {
         return result;
       }
 
-      const content = await readFileContent(file);
+      const content = await this.readFileContent(file);
+
       const { transformedCode, appliedTransformations } = transformCode(content);
 
       if (transformedCode !== content && appliedTransformations.length > 0) {
@@ -142,7 +109,15 @@ export class FileTransformer {
 
       return result;
     } catch (error) {
-      this.logFileError(file.name, error);
+      this.errorCollector.addError({
+        code: "FILE_TRANSFORM_ERROR",
+        severity: "warning",
+        message: `Error transforming file ${file.name}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        file: file.name,
+      });
+
       return result;
     }
   }
@@ -150,120 +125,101 @@ export class FileTransformer {
   /**
    * Replace Next.js specific components with Vite/React compatible alternatives
    */
-  async replaceComponents(): Promise<ComponentReplacementResult> {
-    const result: ComponentReplacementResult = {
-      replacedComponents: []
+  async replaceComponents(): Promise<{
+    replacedComponents: { file: string; component: string; count: number }[];
+  }> {
+    const result = {
+      replacedComponents: [] as {
+        file: string;
+        component: string;
+        count: number;
+      }[],
     };
 
     try {
       const componentTypes = ["image", "link", "head", "script", "dynamic"];
 
       for (const file of this.files) {
-        if (this.shouldSkipComponentFile(file.name)) {
+        if (
+          this.shouldSkipFile(file.name) ||
+          (!file.name.endsWith(".tsx") && !file.name.endsWith(".jsx"))
+        ) {
           continue;
         }
 
-        await this.processComponentFile(file, componentTypes, result);
-      }
+        try {
+          const content = await this.readFileContent(file);
 
-      return result;
-    } catch (error) {
-      this.handleComponentReplaceError(error);
-      return result;
-    }
-  }
+          for (const componentType of componentTypes) {
+            const usage = analyzeComponentUsage(content, componentType);
 
-  /**
-   * Check if a component file should be skipped
-   */
-  private shouldSkipComponentFile(fileName: string): boolean {
-    return shouldSkipFile(fileName) || (!fileName.endsWith(".tsx") && !fileName.endsWith(".jsx"));
-  }
+            if (usage.used) {
+              const transformResult = transformComponent(content, componentType);
 
-  /**
-   * Process a file for component replacements
-   */
-  private async processComponentFile(
-    file: File, 
-    componentTypes: string[], 
-    result: ComponentReplacementResult
-  ): Promise<void> {
-    try {
-      const content = await readFileContent(file);
+              if (transformResult.code !== content) {
+                result.replacedComponents.push({
+                  file: file.name,
+                  component: componentType,
+                  count: usage.count,
+                });
 
-      for (const componentType of componentTypes) {
-        const usage = analyzeComponentUsage(content, componentType);
-
-        if (usage.used) {
-          const transformResult = transformComponent(content, componentType);
-
-          if (transformResult.code !== content) {
-            result.replacedComponents.push({
-              file: file.name,
-              component: componentType,
-              count: usage.count,
-            });
-
-            this.logComponentWarnings(file.name, transformResult.warnings);
+                transformResult.warnings.forEach((warning) => {
+                  this.errorCollector.addError({
+                    code: `COMPONENT_TRANSFORM_WARNING`,
+                    severity: "warning",
+                    message: warning,
+                    file: file.name,
+                  });
+                });
+              }
+            }
           }
+        } catch (error) {
+          this.errorCollector.addError({
+            code: "COMPONENT_REPLACE_ERROR",
+            severity: "warning",
+            message: `Error replacing components in ${file.name}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+            file: file.name,
+          });
         }
       }
+
+      return result;
     } catch (error) {
-      this.logFileError(file.name, error);
+      this.errorCollector.addError({
+        code: "COMPONENT_REPLACE_FAILED",
+        severity: "warning",
+        message: `Component replacement process failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      });
+
+      return result;
     }
   }
 
-  /**
-   * Log component transformation warnings
-   */
-  private logComponentWarnings(fileName: string, warnings: string[]): void {
-    warnings.forEach((warning) => {
-      this.errorCollector.addError({
-        code: `COMPONENT_TRANSFORM_WARNING`,
-        severity: "warning",
-        message: warning,
-        file: fileName,
-      });
-    });
+  private shouldSkipFile(fileName: string): boolean {
+    const skipExtensions = [
+      ".jpg",
+      ".png",
+      ".gif",
+      ".svg",
+      ".mp4",
+      ".mp3",
+      ".pdf",
+      ".ico",
+    ];
+    return skipExtensions.some((ext) => fileName.toLowerCase().endsWith(ext));
   }
 
-  /**
-   * Handle global transformation error
-   */
-  private handleTransformationError(error: unknown): void {
-    this.errorCollector.addError({
-      code: "FILE_TRANSFORM_FAILED",
-      severity: "critical",
-      message: `Error during file transformation: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    });
-  }
-
-  /**
-   * Handle component replacement error
-   */
-  private handleComponentReplaceError(error: unknown): void {
-    this.errorCollector.addError({
-      code: "COMPONENT_REPLACE_FAILED",
-      severity: "warning",
-      message: `Component replacement process failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    });
-  }
-
-  /**
-   * Log file-specific error
-   */
-  private logFileError(fileName: string, error: unknown): void {
-    this.errorCollector.addError({
-      code: "FILE_TRANSFORM_ERROR",
-      severity: "warning",
-      message: `Error transforming file ${fileName}: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-      file: fileName,
+  private async readFileContent(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = (e) => reject(new Error("File reading error"));
+      reader.readAsText(file);
     });
   }
 }
