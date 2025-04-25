@@ -2,12 +2,18 @@
 import { RouteObject } from "react-router-dom";
 import { NextJsRoute, RouteConversionResult } from "@/types/conversion";
 
+// Re-export the NextJsRoute type to avoid circular dependencies
+export type { NextJsRoute };
+
 export function analyzeNextJsRoutes(
-  files: string[]
+  files: File[] | string[]
 ): NextJsRoute[] {
   const routes: NextJsRoute[] = [];
   
-  files
+  // Convert File[] to string[] if needed
+  const filePaths = files.map(file => typeof file === 'string' ? file : file.name);
+  
+  filePaths
     .filter(file => file.includes('/pages/') && 
       !file.includes('/_app.') && !file.includes('/_document.'))
     .forEach(file => {
@@ -21,7 +27,7 @@ export function analyzeNextJsRoutes(
 }
 
 export function convertNextJsRoutes(
-  files: string[]
+  files: File[] | string[]
 ): RouteConversionResult {
   const result: RouteConversionResult = {
     nextRoutes: [],
@@ -43,6 +49,11 @@ export function convertNextJsRoutes(
   result.code = generateRouterCode(reactRouterRoutes);
   
   return result;
+}
+
+// Export the function that convertToReactRoutes wraps in route/routeConverter.ts
+export function convertToReactRoutes(nextRoutes: NextJsRoute[]): RouteObject[] {
+  return convertToReactRouterRoutes(nextRoutes);
 }
 
 function createRouteFromFilePath(filePath: string): NextJsRoute | null {

@@ -1,5 +1,4 @@
-
-import { analyzeNextJsRoutes, convertToReactRoutes, NextJsRoute } from "../routeConverter";
+import { analyzeNextJsRoutes, convertToReactRoutes, type NextJsRoute } from "../routeConverter";
 import { ErrorCollector } from "../errors/ErrorCollector";
 
 /**
@@ -42,7 +41,7 @@ export class RouteAnalyzer {
           code: 'COMPLEX_ROUTE',
           severity: 'warning',
           message: `Complex route pattern detected: ${route.path}`,
-          file: route.path, // Use path instead of non-existent filePath
+          file: route.path,
           suggestion: `This route may need manual verification after conversion`
         });
       });

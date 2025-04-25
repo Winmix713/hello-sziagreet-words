@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { analyzeNextJsRoutes, convertToReactRoutes, NextJsRoute } from "@/services/routeConverter";
+import { analyzeNextJsRoutes, convertToReactRoutes, type NextJsRoute } from "@/services/routeConverter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChevronRight, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

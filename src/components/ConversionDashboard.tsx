@@ -64,8 +64,15 @@ const ConversionDashboard = ({
       parentOnStartConversion();
       
       // Update context state
-      dispatch({ type: "START_CONVERSION" });
-      dispatch({ type: "SET_OPTIONS", payload: options });
+      dispatch({ 
+        type: "START_CONVERSION",
+        options
+      });
+      
+      dispatch({ 
+        type: "SET_OPTIONS", 
+        payload: options 
+      });
       
       toast.info("Starting Next.js to Vite conversion process...");
       
@@ -82,7 +89,8 @@ const ConversionDashboard = ({
           setProgressMessage(message);
           dispatch({ 
             type: "SET_PROGRESS", 
-            payload: { progress, message } 
+            progress,
+            message
           });
         });
         
@@ -94,13 +102,23 @@ const ConversionDashboard = ({
           toast.success("Conversion completed successfully!");
           dispatch({ 
             type: "SET_RESULT", 
-            payload: result 
+            result: {
+              success: true,
+              errors: result.errors,
+              warnings: result.warnings,
+              stats: result.stats
+            }
           });
         } else {
           toast.error(`Conversion completed with ${result.errors.length} errors.`);
           dispatch({ 
             type: "SET_RESULT", 
-            payload: result 
+            result: {
+              success: false,
+              errors: result.errors,
+              warnings: result.warnings,
+              stats: result.stats
+            }
           });
         }
       } else {
@@ -110,7 +128,7 @@ const ConversionDashboard = ({
       toast.error(`Error during conversion: ${error instanceof Error ? error.message : String(error)}`);
       dispatch({ 
         type: "ADD_LOG", 
-        payload: {
+        log: {
           type: "error",
           message: error instanceof Error ? error.message : String(error)
         }
@@ -124,7 +142,10 @@ const ConversionDashboard = ({
 
   // When component mounts, update the context with initial options
   useEffect(() => {
-    dispatch({ type: "SET_OPTIONS", payload: options });
+    dispatch({ 
+      type: "SET_OPTIONS", 
+      payload: options 
+    });
   }, []);
 
   return (
