@@ -1,0 +1,241 @@
+import { useState } from 'react';
+import { 
+  Button, 
+  Card, 
+  Badge, 
+  Switch, 
+  ProgressBar, 
+  Avatar, 
+  Tabs, 
+  Input, 
+  DropdownMenu, 
+  DropdownItem, 
+  GlassPanel, 
+  Tooltip, 
+  AnimatedCounter, 
+  TypingEffect
+} from './corecomponentsui';
+
+export default function SportsBettingDashboard() {
+  const [activeLeague, setActiveLeague] = useState('Premier League');
+  const [notifications, setNotifications] = useState(true);
+  const [searchValue, setSearchValue] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  
+  // Sample match data
+  const upcomingMatches = [
+    { id: 1, homeTeam: 'Arsenal', awayTeam: 'Chelsea', time: '19:45', date: 'Today', homeOdds: 2.1, drawOdds: 3.4, awayOdds: 3.2, popularity: 78 },
+    { id: 2, homeTeam: 'Liverpool', awayTeam: 'Man City', time: '17:30', date: 'Tomorrow', homeOdds: 2.5, drawOdds: 3.1, awayOdds: 2.8, popularity: 92 },
+    { id: 3, homeTeam: 'Tottenham', awayTeam: 'Man United', time: '16:00', date: 'Saturday', homeOdds: 2.7, drawOdds: 3.3, awayOdds: 2.5, popularity: 85 }
+  ];
+  
+  // Tab content
+  const tabData = [
+    { label: 'Upcoming', content: <UpcomingMatchesContent matches={upcomingMatches} onBetPlace={() => setShowToast(true)} /> },
+    { label: 'Live Now', content: <LiveMatchesContent /> },
+    { label: 'Results', content: <div className="py-4 text-gray-400 text-center">Recent match results will appear here</div> }
+  ];
+  
+  const leagueOptions = ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'];
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-dark-900 to-dark-950 p-6 text-white">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <div className="mr-2 text-blue-400 text-2xl font-bold">BetPro</div>
+          <Badge variant="primary" className="ml-2">BETA</Badge>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <Tooltip content="Notifications" position="bottom">
+            <Switch 
+              checked={notifications} 
+              onChange={() => setNotifications(!notifications)} 
+              size="sm"
+            />
+          </Tooltip>
+          
+          <DropdownMenu
+            trigger={
+              <Avatar 
+                alt="John Doe" 
+                status="online"
+                size="sm"
+              />
+            }
+            align="right"
+          >
+            <DropdownItem>Profile</DropdownItem>
+            <DropdownItem>Settings</DropdownItem>
+            <DropdownItem>History</DropdownItem>
+            <DropdownItem danger>Sign Out</DropdownItem>
+          </DropdownMenu>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Sidebar */}
+        <div className="lg:col-span-1">
+          <Card className="p-4 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium text-lg">Your Stats</h3>
+              <Badge variant="gradient">Pro Member</Badge>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-400">Balance</span>
+                  <div className="text-lg font-medium">
+                    $<AnimatedCounter value={1250} duration={1500} decimals={2} />
+                  </div>
+                </div>
+                <ProgressBar value={65} max={100} variant="primary" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-400">Win Rate</span>
+                  <span className="font-medium">63%</span>
+                </div>
+                <ProgressBar value={63} max={100} variant="success" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm text-gray-400">Active Bets</span>
+                  <span className="font-medium">5</span>
+                </div>
+                <ProgressBar value={5} max={10} variant="warning" />
+              </div>
+            </div>
+          </Card>
+          
+          <GlassPanel variant="blue" className="p-4 mb-6">
+            <h3 className="font-medium mb-3">Popular Leagues</h3>
+            <div className="space-y-2">
+              {leagueOptions.map((league) => (
+                <div 
+                  key={league}
+                  onClick={() => setActiveLeague(league)}
+                  className={`p-2 rounded-lg cursor-pointer transition-all ${
+                    activeLeague === league 
+                      ? 'bg-blue-500/20 border border-blue-500/30' 
+                      : 'hover:bg-dark-700/50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 mr-3"></div>
+                    <span>{league}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassPanel>
+          
+          <Card variant="neomorphic" className="p-4">
+            <h3 className="font-medium mb-3">Hot Tips</h3>
+            <div className="text-sm text-gray-300">
+              <TypingEffect 
+                text="Manchester City has won 80% of their last 10 home games. Consider this for your next bet." 
+                typingSpeed={30}
+              />
+            </div>
+          </Card>
+        </div>
+        
+        {/* Main Content Area */}
+        <div className="lg:col-span-2">
+          <Card variant="glass" className="mb-6">
+            <div className="p-4 border-b border-dark-700">
+              <Input
+                placeholder="Search matches, teams, leagues..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>}
+              />
+            </div>
+            
+            <Tabs tabs={tabData} />
+          </Card>
+          
+          <GlassPanel variant="gradient" className="p-6">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-medium mb-2">Ready to upgrade your betting strategy?</h3>
+              <p className="text-gray-300 text-sm mb-4">Get personalized predictions and advanced statistics.</p>
+              <Button variant="primary" size="lg">
+                Upgrade to Pro
+              </Button>
+            </div>
+          </GlassPanel>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for upcoming matches tab
+function UpcomingMatchesContent({ matches, onBetPlace }) {
+  return (
+    <div className="space-y-4 p-2">
+      {matches.map(match => (
+        <Card key={match.id} variant="glass" className="p-4 hover:border-blue-500/30">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center">
+              <Badge variant="neutral" size="sm">{match.date}</Badge>
+              <span className="ml-2 text-sm text-gray-400">{match.time}</span>
+            </div>
+            <Badge variant="primary" size="sm">
+              <div className="flex items-center">
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {match.popularity}%
+              </div>
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="text-center flex-1">
+              <div className="font-medium">{match.homeTeam}</div>
+            </div>
+            <div className="text-center text-gray-400 mx-4">VS</div>
+            <div className="text-center flex-1">
+              <div className="font-medium">{match.awayTeam}</div>
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <Button size="sm" onClick={onBetPlace}>
+              Home ({match.homeOdds})
+            </Button>
+            <Button size="sm" variant="glass" onClick={onBetPlace}>
+              Draw ({match.drawOdds})
+            </Button>
+            <Button size="sm" variant="secondary" onClick={onBetPlace}>
+              Away ({match.awayOdds})
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// Helper component for live matches tab
+function LiveMatchesContent() {
+  return (
+    <div className="p-6 flex flex-col items-center justify-center">
+      <div className="text-blue-400 mb-4">
+        <svg className="w-12 h-12 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div className="text-lg font-medium mb-2">Live Matches Loading</div>
+      <p className="text-gray-400 text-sm text-center">Live match data is being fetched from our servers. Please wait a moment.</p>
+    </div>
+  );
+}
